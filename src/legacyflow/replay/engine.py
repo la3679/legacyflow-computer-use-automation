@@ -4,7 +4,7 @@ from decimal import Decimal, InvalidOperation
 from legacyflow.config import Settings
 from legacyflow.evidence.logger import Evidence
 from legacyflow.models.contracts import Action, Artifact, FlowError, Result, Value
-from legacyflow.runtime import business_outcome, classify, failed, final_screenshot
+from legacyflow.runtime import business_outcome, classify, failed, final_screenshot, ready
 from legacyflow.surfaces.base import ComputerSurface
 
 
@@ -34,7 +34,7 @@ class ReplayEngine:
                 await self.surface.execute(
                     Action(kind="navigate", value=Value(source="literal", value=entry)), {}
                 )
-                observation = await self.surface.observe()
+                observation = await ready(self.surface, self.evidence)
                 if observation.application != artifact.target.application:
                     raise FlowError(
                         "INCOMPATIBLE_APP", artifact.target.application, "identity mismatch"
@@ -49,7 +49,7 @@ class ReplayEngine:
                         )
                     self.evidence.event("step_started", step_id=step_id, capability_id=artifact.id)
                     await self.surface.execute(step.action, inputs)
-                    observation = await self.surface.observe()
+                    observation = await ready(self.surface, self.evidence)
                     if classify(observation):
                         return await business_outcome(self.surface, self.evidence, completed + 1)
                     await self.surface.verify(step.expect, inputs)

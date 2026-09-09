@@ -6,7 +6,7 @@ from legacyflow.discovery.planner import Planner
 from legacyflow.discovery.recorder import Recorder
 from legacyflow.evidence.logger import Evidence
 from legacyflow.models.contracts import Action, FlowError, Result, Value
-from legacyflow.runtime import business_outcome, classify, failed, final_screenshot
+from legacyflow.runtime import business_outcome, classify, failed, final_screenshot, ready
 from legacyflow.surfaces.base import ComputerSurface
 
 
@@ -34,7 +34,7 @@ class DiscoveryRunner:
                 )
                 for index in range(self.settings.max_steps):
                     step_id = f"decision-{index + 1:02d}"
-                    observation = await self.surface.observe()
+                    observation = await ready(self.surface, self.evidence)
                     if classify(observation):
                         return await business_outcome(
                             self.surface, self.evidence, len(recorder.steps)
@@ -102,7 +102,7 @@ class DiscoveryRunner:
                     if history[-2:] == [fingerprint, fingerprint]:
                         raise FlowError("DEAD_END", "progress", "repeated identical action")
                     await self.surface.execute(action, inputs)
-                    after = await self.surface.observe()
+                    after = await ready(self.surface, self.evidence)
                     if classify(after):
                         return await business_outcome(
                             self.surface, self.evidence, len(recorder.steps) + 1

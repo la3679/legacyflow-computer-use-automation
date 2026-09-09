@@ -34,6 +34,9 @@ async def artifact(base_url: str, tmp_path: Path) -> Artifact:
     "member,scenario,status,code",
     [
         ("23456", "normal", "success", None),
+        ("23456", "notice", "success", None),
+        ("23456", "slow", "success", None),
+        ("23456", "handoff", "failure", "INTERVENTION_REQUIRED"),
         ("99999", "normal", "business_outcome", None),
         ("40300", "normal", "failure", "PERMISSION_DENIED"),
         ("23456", "expired", "failure", "SESSION_EXPIRED"),

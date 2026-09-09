@@ -3,7 +3,17 @@
 from pathlib import Path
 
 from legacyflow.evidence.logger import Evidence
-from legacyflow.models.contracts import Failure, FlowError, Observation, Result
+from legacyflow.models.contracts import (
+    Action,
+    Condition,
+    Failure,
+    FlowError,
+    Observation,
+    Result,
+    Strategy,
+    Target,
+    Value,
+)
 from legacyflow.surfaces.base import ComputerSurface
 
 
@@ -21,6 +31,32 @@ def classify(observation: Observation) -> str | None:
     if observation.messages:
         raise FlowError("INTERVENTION_REQUIRED", "unblocked application", observation.messages[0])
     return None
+
+
+async def ready(surface: ComputerSurface, evidence: Evidence) -> Observation:
+    """One known notice recovery per transition; no open-ended LLM repair."""
+    observation = await surface.observe()
+    if observation.messages == ["Known System Notice"]:
+        evidence.event("recovery_attempted", reason="known_system_notice", attempt=1, maximum=1)
+        await surface.execute(
+            Action(
+                kind="click",
+                target=Target(
+                    strategies=[Strategy(kind="role", role="button", value="Acknowledge Notice")]
+                ),
+            ),
+            {},
+        )
+        await surface.verify(
+            Condition(kind="heading", value=Value(source="literal", value=observation.heading)), {}
+        )
+        observation = await surface.observe()
+        if observation.messages:
+            raise FlowError(
+                "RECOVERY_EXHAUSTED", "notice dismissed", "notice remains after one recovery"
+            )
+        evidence.event("recovery_completed", verified=True)
+    return observation
 
 
 async def failed(

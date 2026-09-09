@@ -1,0 +1,14 @@
+{
+  "status": "success",
+  "run_id": "dca0666c81b449a8849d4c68f1437cb0",
+  "capability_id": "open-savings-subaccount",
+  "capability_version": "1.0.0",
+  "steps_completed": 9,
+  "outputs": {
+    "member_name": "Casey Example",
+    "review_status": "ready",
+    "initial_deposit": "250.00"
+  },
+  "outcome": null,
+  "error": null
+}

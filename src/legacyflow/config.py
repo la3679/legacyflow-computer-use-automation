@@ -14,7 +14,7 @@ class Settings(BaseModel):
     model: str = "gpt-5.6-terra"
     max_steps: int = Field(default=24, ge=1, le=100)
     timeout_seconds: int = Field(default=180, ge=1, le=600)
-    action_timeout_ms: int = Field(default=5000, ge=100, le=30000)
+    action_timeout_ms: int = Field(default=15000, ge=100, le=30000)
 
     @classmethod
     def load(cls, path: Path = Path(".env")) -> "Settings":

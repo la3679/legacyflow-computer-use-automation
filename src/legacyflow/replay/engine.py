@@ -4,13 +4,27 @@ from decimal import Decimal, InvalidOperation
 from legacyflow.config import Settings
 from legacyflow.evidence.logger import Evidence
 from legacyflow.models.contracts import Action, Artifact, FlowError, Result, Value
-from legacyflow.runtime import business_outcome, classify, failed, final_screenshot, ready
+from legacyflow.runtime import (
+    InterventionHandler,
+    business_outcome,
+    classify,
+    failed,
+    final_screenshot,
+    ready,
+)
 from legacyflow.surfaces.base import ComputerSurface
 
 
 class ReplayEngine:
-    def __init__(self, surface: ComputerSurface, evidence: Evidence, settings: Settings) -> None:
+    def __init__(
+        self,
+        surface: ComputerSurface,
+        evidence: Evidence,
+        settings: Settings,
+        handoff: InterventionHandler | None = None,
+    ) -> None:
         self.surface, self.evidence, self.settings = surface, evidence, settings
+        self.handoff = handoff
 
     async def run(
         self, artifact: Artifact, inputs: dict[str, str], scenario: str = "normal"
@@ -43,13 +57,15 @@ class ReplayEngine:
                     return await business_outcome(self.surface, self.evidence, completed)
                 for step in artifact.steps:
                     step_id = step.id
+                    if self.handoff:
+                        self.handoff.step_id = step_id
                     if step.risk == "irreversible":
                         raise FlowError(
                             "HUMAN_APPROVAL_REQUIRED", "human approval", "irreversible step"
                         )
                     self.evidence.event("step_started", step_id=step_id, capability_id=artifact.id)
                     await self.surface.execute(step.action, inputs)
-                    observation = await ready(self.surface, self.evidence)
+                    observation = await ready(self.surface, self.evidence, self.handoff)
                     if classify(observation):
                         return await business_outcome(self.surface, self.evidence, completed + 1)
                     await self.surface.verify(step.expect, inputs)

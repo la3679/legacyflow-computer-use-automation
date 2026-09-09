@@ -1,6 +1,7 @@
 """Deterministic runtime classification shared by discovery and replay; no planner dependency."""
 
 from pathlib import Path
+from typing import Protocol
 
 from legacyflow.evidence.logger import Evidence
 from legacyflow.models.contracts import (
@@ -33,7 +34,15 @@ def classify(observation: Observation) -> str | None:
     return None
 
 
-async def ready(surface: ComputerSurface, evidence: Evidence) -> Observation:
+class InterventionHandler(Protocol):
+    step_id: str
+
+    async def request(self, observation: Observation) -> None: ...
+
+
+async def ready(
+    surface: ComputerSurface, evidence: Evidence, handoff: InterventionHandler | None = None
+) -> Observation:
     """One known notice recovery per transition; no open-ended LLM repair."""
     observation = await surface.observe()
     if observation.messages == ["Known System Notice"]:
@@ -56,12 +65,20 @@ async def ready(surface: ComputerSurface, evidence: Evidence) -> Observation:
                 "RECOVERY_EXHAUSTED", "notice dismissed", "notice remains after one recovery"
             )
         evidence.event("recovery_completed", verified=True)
+    if observation.messages and handoff:
+        await handoff.request(observation)
+        observation = await surface.observe()
     return observation
 
 
 async def failed(
     surface: ComputerSurface, evidence: Evidence, error: FlowError, step_id: str, completed: int
 ) -> Result:
+    if error.code == "OPERATOR_ABORTED":
+        evidence.event("run_aborted", step_id=step_id)
+        return evidence.finish(
+            Result(status="aborted", run_id=evidence.run_id, steps_completed=completed)
+        )
     image: str | None = "failure.png"
     try:
         await surface.screenshot(evidence.directory / "failure.png")

@@ -6,13 +6,25 @@ from legacyflow.discovery.planner import Planner
 from legacyflow.discovery.recorder import Recorder
 from legacyflow.evidence.logger import Evidence
 from legacyflow.models.contracts import Action, FlowError, Result, Value
-from legacyflow.runtime import business_outcome, classify, failed, final_screenshot, ready
+from legacyflow.runtime import (
+    InterventionHandler,
+    business_outcome,
+    classify,
+    failed,
+    final_screenshot,
+    ready,
+)
 from legacyflow.surfaces.base import ComputerSurface
 
 
 class DiscoveryRunner:
     def __init__(
-        self, surface: ComputerSurface, planner: Planner, evidence: Evidence, settings: Settings
+        self,
+        surface: ComputerSurface,
+        planner: Planner,
+        evidence: Evidence,
+        settings: Settings,
+        handoff: InterventionHandler | None = None,
     ) -> None:
         self.surface, self.planner, self.evidence, self.settings = (
             surface,
@@ -20,6 +32,7 @@ class DiscoveryRunner:
             evidence,
             settings,
         )
+        self.handoff = handoff
 
     async def run(
         self, goal: str, target: str, inputs: dict[str, str], artifact_path: Path
@@ -34,7 +47,9 @@ class DiscoveryRunner:
                 )
                 for index in range(self.settings.max_steps):
                     step_id = f"decision-{index + 1:02d}"
-                    observation = await ready(self.surface, self.evidence)
+                    if self.handoff:
+                        self.handoff.step_id = step_id
+                    observation = await ready(self.surface, self.evidence, self.handoff)
                     if classify(observation):
                         return await business_outcome(
                             self.surface, self.evidence, len(recorder.steps)
@@ -66,6 +81,9 @@ class DiscoveryRunner:
                             )
                         )
                     if decision.action == "escalate":
+                        if self.handoff:
+                            await self.handoff.request(observation)
+                            continue
                         raise FlowError(
                             "INTERVENTION_REQUIRED",
                             "human assistance",
@@ -102,7 +120,7 @@ class DiscoveryRunner:
                     if history[-2:] == [fingerprint, fingerprint]:
                         raise FlowError("DEAD_END", "progress", "repeated identical action")
                     await self.surface.execute(action, inputs)
-                    after = await ready(self.surface, self.evidence)
+                    after = await ready(self.surface, self.evidence, self.handoff)
                     if classify(after):
                         return await business_outcome(
                             self.surface, self.evidence, len(recorder.steps) + 1

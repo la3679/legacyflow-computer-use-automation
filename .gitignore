@@ -1,0 +1,72 @@
+# Secrets / local environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Runtime-generated local output
+runs/
+artifacts/
+tmp/
+temp/
+*.log
+
+# Local planning / checkpoints / private agent work
+.work/
+PLAN.md
+IMPLEMENTATION_PLAN.md
+CHECKPOINT.md
+CHECKPOINT_*.md
+SESSION_LOG.md
+DECISIONS_PRIVATE.md
+TODO_PRIVATE.md
+MASTER_PROMPT.md
+CODEX_MASTER_PROMPT.md
+
+# Agent / assistant project metadata
+.agents/
+agents/
+.claude/
+claude/
+.codex/
+codex/
+.mcp/
+mcp/
+.graphify/
+graphify/
+AGENTS.md
+CLAUDE.md
+
+# Playwright local output
+playwright-report/
+test-results/
+blob-report/
+
+# Graphify local output
+graphify-out/
+.graphify*.json
+.graphifyignore
+

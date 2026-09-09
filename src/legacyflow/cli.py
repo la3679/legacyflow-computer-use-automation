@@ -55,7 +55,15 @@ async def run_ui(
     if headless is not None:
         settings.headless = headless
     policy = Policy.load(policy_path)
-    redactor = Redactor([values.get("member_id", "")])
+    artifact = (
+        Artifact.model_validate_json(artifact_path.read_text(encoding="utf-8"))
+        if mode == "replay"
+        else None
+    )
+    sensitive_names = {"member_id"}
+    if artifact:
+        sensitive_names.update(name for name, spec in artifact.inputs.items() if spec.sensitive)
+    redactor = Redactor([values.get(name, "") for name in sensitive_names])
     evidence = Evidence(root, mode, redactor)
     async with BrowserSurface(settings, policy, evidence) as surface:
         manager = HandoffManager(surface, evidence, settings.operator_url) if operator else None
@@ -97,7 +105,7 @@ async def run_ui(
                 finally:
                     await planner.close()
             else:
-                artifact = Artifact.model_validate_json(artifact_path.read_text(encoding="utf-8"))
+                assert artifact is not None
                 result = await ReplayEngine(surface, evidence, settings, manager).run(
                     artifact, values, scenario
                 )

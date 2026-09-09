@@ -5,6 +5,12 @@ from typing import Any
 MASK = "[REDACTED]"
 SENSITIVE = re.compile(r"key|authorization|cookie|token|password|credential|member_id", re.I)
 SECRET = re.compile(r"sk-[A-Za-z0-9_-]+|Bearer\s+[^\s\"']+", re.I)
+HEADER = re.compile(r"\b(?:authorization|cookie|set-cookie)\s*:\s*[^\r\n]+", re.I)
+ASSIGNMENT = re.compile(
+    r"\b(?:api[_-]?key|password|credential|session[_-]?token|access[_-]?token|member[_-]?id)"
+    r"\s*[=:]\s*(?:\"[^\"]*\"|'[^']*'|[^\s&,;]+)",
+    re.I,
+)
 
 
 class Redactor:
@@ -20,6 +26,8 @@ class Redactor:
         if isinstance(value, (list, tuple)):
             return [self.clean(v) for v in value]
         if isinstance(value, str):
+            value = HEADER.sub(MASK, value)
+            value = ASSIGNMENT.sub(MASK, value)
             for secret in self.secrets:
                 value = value.replace(secret, MASK)
             return SECRET.sub(MASK, value)

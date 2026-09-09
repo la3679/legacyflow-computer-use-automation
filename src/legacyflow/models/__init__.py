@@ -1,0 +1,1 @@
+"""Serializable, surface-neutral contracts."""

@@ -1,0 +1,16 @@
+{
+  "status": "failure",
+  "run_id": "5c1f7e1562b64bf190cdabbca18415d6",
+  "capability_id": "open-savings-subaccount",
+  "capability_version": "1.0.0",
+  "steps_completed": 1,
+  "outputs": {},
+  "outcome": null,
+  "error": {
+    "code": "PERMISSION_DENIED",
+    "step_id": "step-02-click",
+    "expected": "accessible session",
+    "observed": "Permission Denied",
+    "evidence": "failure.png"
+  }
+}

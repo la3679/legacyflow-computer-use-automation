@@ -1,0 +1,16 @@
+{
+  "status": "failure",
+  "run_id": "f8f1bbf6190c4a0bb01afd2c6c8d6b16",
+  "capability_id": "open-savings-subaccount",
+  "capability_version": "1.0.0",
+  "steps_completed": 9,
+  "outputs": {},
+  "outcome": null,
+  "error": {
+    "code": "HUMAN_APPROVAL_REQUIRED",
+    "step_id": "attempt-create-account",
+    "expected": "human approval",
+    "observed": "risky action blocked",
+    "evidence": "failure.png"
+  }
+}

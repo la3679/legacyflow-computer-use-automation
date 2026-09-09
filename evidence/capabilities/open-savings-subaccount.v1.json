@@ -1,0 +1,439 @@
+{
+  "schema_version": "1.0",
+  "id": "open-savings-subaccount",
+  "version": "1.0.0",
+  "name": "Open savings sub-account to review",
+  "description": "Prepare a savings sub-account without creating the account.",
+  "target": {
+    "application": "legacyflow-demo",
+    "vendor_family": "legacyflow-demo-core",
+    "surface": "web",
+    "app_major": 1,
+    "variant": "base",
+    "entry_point": "/members"
+  },
+  "inputs": {
+    "member_id": {
+      "type": "string",
+      "sensitive": true,
+      "required": true
+    },
+    "initial_deposit": {
+      "type": "decimal",
+      "sensitive": false,
+      "required": true
+    }
+  },
+  "outputs": {
+    "member_name": {
+      "type": "string",
+      "target": {
+        "strategies": [
+          {
+            "kind": "role",
+            "value": "Member name",
+            "role": "status"
+          }
+        ],
+        "frame": null,
+        "region": null
+      }
+    },
+    "review_status": {
+      "type": "string",
+      "target": {
+        "strategies": [
+          {
+            "kind": "role",
+            "value": "Review status",
+            "role": "status"
+          }
+        ],
+        "frame": null,
+        "region": null
+      }
+    },
+    "initial_deposit": {
+      "type": "decimal",
+      "target": {
+        "strategies": [
+          {
+            "kind": "role",
+            "value": "Initial deposit",
+            "role": "status"
+          }
+        ],
+        "frame": null,
+        "region": null
+      }
+    }
+  },
+  "steps": [
+    {
+      "id": "step-01-type",
+      "action": {
+        "kind": "type",
+        "target": {
+          "strategies": [
+            {
+              "kind": "role",
+              "value": "Member ID",
+              "role": "textbox"
+            },
+            {
+              "kind": "label",
+              "value": "Member ID",
+              "role": null
+            },
+            {
+              "kind": "attribute",
+              "value": "member_id",
+              "role": null
+            }
+          ],
+          "frame": null,
+          "region": null
+        },
+        "value": {
+          "source": "input",
+          "value": "member_id"
+        }
+      },
+      "expect": {
+        "kind": "field",
+        "value": {
+          "source": "input",
+          "value": "member_id"
+        },
+        "target": {
+          "strategies": [
+            {
+              "kind": "role",
+              "value": "Member ID",
+              "role": "textbox"
+            },
+            {
+              "kind": "label",
+              "value": "Member ID",
+              "role": null
+            },
+            {
+              "kind": "attribute",
+              "value": "member_id",
+              "role": null
+            }
+          ],
+          "frame": null,
+          "region": null
+        }
+      },
+      "risk": "reversible"
+    },
+    {
+      "id": "step-02-click",
+      "action": {
+        "kind": "click",
+        "target": {
+          "strategies": [
+            {
+              "kind": "role",
+              "value": "Search",
+              "role": "button"
+            },
+            {
+              "kind": "text",
+              "value": "Search",
+              "role": null
+            }
+          ],
+          "frame": null,
+          "region": null
+        },
+        "value": null
+      },
+      "expect": {
+        "kind": "heading",
+        "value": {
+          "source": "literal",
+          "value": "Member Details"
+        },
+        "target": null
+      },
+      "risk": "reversible"
+    },
+    {
+      "id": "step-03-click",
+      "action": {
+        "kind": "click",
+        "target": {
+          "strategies": [
+            {
+              "kind": "role",
+              "value": "Open Sub-Account",
+              "role": "button"
+            },
+            {
+              "kind": "text",
+              "value": "Open Sub-Account",
+              "role": null
+            }
+          ],
+          "frame": null,
+          "region": null
+        },
+        "value": null
+      },
+      "expect": {
+        "kind": "heading",
+        "value": {
+          "source": "literal",
+          "value": "Open New Sub-Account"
+        },
+        "target": null
+      },
+      "risk": "reversible"
+    },
+    {
+      "id": "step-04-select",
+      "action": {
+        "kind": "select",
+        "target": {
+          "strategies": [
+            {
+              "kind": "role",
+              "value": "Account Type",
+              "role": "combobox"
+            },
+            {
+              "kind": "label",
+              "value": "Account Type",
+              "role": null
+            },
+            {
+              "kind": "attribute",
+              "value": "account_type",
+              "role": null
+            }
+          ],
+          "frame": null,
+          "region": null
+        },
+        "value": {
+          "source": "literal",
+          "value": "Savings"
+        }
+      },
+      "expect": {
+        "kind": "field",
+        "value": {
+          "source": "literal",
+          "value": "Savings"
+        },
+        "target": {
+          "strategies": [
+            {
+              "kind": "role",
+              "value": "Account Type",
+              "role": "combobox"
+            },
+            {
+              "kind": "label",
+              "value": "Account Type",
+              "role": null
+            },
+            {
+              "kind": "attribute",
+              "value": "account_type",
+              "role": null
+            }
+          ],
+          "frame": null,
+          "region": null
+        }
+      },
+      "risk": "reversible"
+    },
+    {
+      "id": "step-05-type",
+      "action": {
+        "kind": "type",
+        "target": {
+          "strategies": [
+            {
+              "kind": "role",
+              "value": "Initial Deposit",
+              "role": "textbox"
+            },
+            {
+              "kind": "label",
+              "value": "Initial Deposit",
+              "role": null
+            },
+            {
+              "kind": "attribute",
+              "value": "initial_deposit",
+              "role": null
+            }
+          ],
+          "frame": null,
+          "region": null
+        },
+        "value": {
+          "source": "input",
+          "value": "initial_deposit"
+        }
+      },
+      "expect": {
+        "kind": "field",
+        "value": {
+          "source": "input",
+          "value": "initial_deposit"
+        },
+        "target": {
+          "strategies": [
+            {
+              "kind": "role",
+              "value": "Initial Deposit",
+              "role": "textbox"
+            },
+            {
+              "kind": "label",
+              "value": "Initial Deposit",
+              "role": null
+            },
+            {
+              "kind": "attribute",
+              "value": "initial_deposit",
+              "role": null
+            }
+          ],
+          "frame": null,
+          "region": null
+        }
+      },
+      "risk": "reversible"
+    },
+    {
+      "id": "step-06-click",
+      "action": {
+        "kind": "click",
+        "target": {
+          "strategies": [
+            {
+              "kind": "role",
+              "value": "Continue",
+              "role": "button"
+            },
+            {
+              "kind": "text",
+              "value": "Continue",
+              "role": null
+            }
+          ],
+          "frame": null,
+          "region": null
+        },
+        "value": null
+      },
+      "expect": {
+        "kind": "heading",
+        "value": {
+          "source": "literal",
+          "value": "Review New Account"
+        },
+        "target": null
+      },
+      "risk": "reversible"
+    },
+    {
+      "id": "step-07-read",
+      "action": {
+        "kind": "read",
+        "target": {
+          "strategies": [
+            {
+              "kind": "role",
+              "value": "Member name",
+              "role": "status"
+            }
+          ],
+          "frame": null,
+          "region": null
+        },
+        "value": null
+      },
+      "expect": {
+        "kind": "heading",
+        "value": {
+          "source": "literal",
+          "value": "Review New Account"
+        },
+        "target": null
+      },
+      "risk": "read"
+    },
+    {
+      "id": "step-08-read",
+      "action": {
+        "kind": "read",
+        "target": {
+          "strategies": [
+            {
+              "kind": "role",
+              "value": "Initial deposit",
+              "role": "status"
+            }
+          ],
+          "frame": null,
+          "region": null
+        },
+        "value": null
+      },
+      "expect": {
+        "kind": "heading",
+        "value": {
+          "source": "literal",
+          "value": "Review New Account"
+        },
+        "target": null
+      },
+      "risk": "read"
+    },
+    {
+      "id": "step-09-read",
+      "action": {
+        "kind": "read",
+        "target": {
+          "strategies": [
+            {
+              "kind": "role",
+              "value": "Review status",
+              "role": "status"
+            }
+          ],
+          "frame": null,
+          "region": null
+        },
+        "value": null
+      },
+      "expect": {
+        "kind": "heading",
+        "value": {
+          "source": "literal",
+          "value": "Review New Account"
+        },
+        "target": null
+      },
+      "risk": "read"
+    }
+  ],
+  "success_checkpoint": {
+    "kind": "heading",
+    "value": {
+      "source": "literal",
+      "value": "Review New Account"
+    },
+    "target": null
+  },
+  "discovery_run_id": "5b5c2111c8754ea4b8c1a5b649ea0fa2"
+}

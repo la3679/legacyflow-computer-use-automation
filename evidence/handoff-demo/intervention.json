@@ -1,0 +1,13 @@
+{
+  "id": "7040e110655343e584f27b6c0e44af8f",
+  "run_id": "3e2f7f27b67844758697b88371947fe8",
+  "session_id": "7fa19780a9c04790888c624179e5e4d3",
+  "capability": "open-savings-subaccount",
+  "step_id": "step-02-click",
+  "reason": "Supervisor Confirmation",
+  "expected_heading": "Member Details",
+  "screenshot": "before-handoff.png",
+  "owner": "human",
+  "state": "WAITING_FOR_HUMAN",
+  "requested_action": "Review the exception in the same browser, then Resume or Abort."
+}

@@ -1,0 +1,1 @@
+"""Sanitized, structured run evidence."""

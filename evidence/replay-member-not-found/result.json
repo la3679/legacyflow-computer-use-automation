@@ -1,0 +1,10 @@
+{
+  "status": "business_outcome",
+  "run_id": "12da0cb1928b4ad081618aba63804452",
+  "capability_id": "open-savings-subaccount",
+  "capability_version": "1.0.0",
+  "steps_completed": 2,
+  "outputs": {},
+  "outcome": "member_not_found",
+  "error": null
+}

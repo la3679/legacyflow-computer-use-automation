@@ -61,6 +61,33 @@ class InputSpec(Contract):
     required: bool = True
 
 
+def validate_inputs(specs: dict[str, InputSpec], values: dict[str, str]) -> dict[str, str]:
+    """Validate before either runner interacts with the application."""
+    if set(values) - set(specs):
+        raise ValueError("Unknown input parameter")
+    result: dict[str, str] = {}
+    for name, spec in specs.items():
+        raw = values.get(name, "")
+        if not raw:
+            if spec.required:
+                raise ValueError("Missing required input")
+            continue
+        if spec.type == "decimal":
+            try:
+                amount = Decimal(raw)
+                if not amount.is_finite() or not 0 < amount <= 100000:
+                    raise ValueError("Deposit out of range")
+                if amount != amount.quantize(Decimal("0.01")):
+                    raise ValueError("Deposit must have at most two decimal places")
+                raw = format(amount, "f")
+            except InvalidOperation:
+                raise ValueError("Invalid decimal input") from None
+        elif len(raw) > 100 or not raw.isalnum():
+            raise ValueError("Invalid identifier input")
+        result[name] = raw
+    return result
+
+
 class OutputSpec(Contract):
     type: Literal["string", "decimal"]
     target: Target
@@ -105,27 +132,7 @@ class Artifact(Contract):
         return self
 
     def validate_inputs(self, values: dict[str, str]) -> dict[str, str]:
-        if set(values) - set(self.inputs):
-            raise ValueError("Unknown input parameter")
-        result: dict[str, str] = {}
-        for name, spec in self.inputs.items():
-            raw = values.get(name, "")
-            if spec.required and not raw:
-                raise ValueError("Missing required input")
-            if spec.type == "decimal":
-                try:
-                    amount = Decimal(raw)
-                    if not amount.is_finite() or not 0 < amount <= 100000:
-                        raise ValueError("Deposit out of range")
-                    if amount != amount.quantize(Decimal("0.01")):
-                        raise ValueError("Deposit must have at most two decimal places")
-                    raw = format(amount, "f")
-                except InvalidOperation:
-                    raise ValueError("Invalid decimal input") from None
-            elif len(raw) > 100 or not raw.isalnum():
-                raise ValueError("Invalid identifier input")
-            result[name] = raw
-        return result
+        return validate_inputs(self.inputs, values)
 
 
 class Control(Contract):

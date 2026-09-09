@@ -1,5 +1,4 @@
 import asyncio
-from decimal import Decimal, InvalidOperation
 
 from legacyflow.config import Settings
 from legacyflow.evidence.logger import Evidence
@@ -8,6 +7,7 @@ from legacyflow.runtime import (
     InterventionHandler,
     business_outcome,
     classify,
+    extract_outputs,
     failed,
     final_screenshot,
     ready,
@@ -29,6 +29,7 @@ class ReplayEngine:
     async def run(
         self, artifact: Artifact, inputs: dict[str, str], scenario: str = "normal"
     ) -> Result:
+        self.evidence.capability = (artifact.id, artifact.version)
         completed, step_id = 0, "entry"
         try:
             try:
@@ -37,7 +38,11 @@ class ReplayEngine:
                 raise FlowError(
                     "INVALID_INPUT", "typed capability inputs", "input validation failed"
                 ) from None
-            if artifact.target.variant != "base" or artifact.target.app_major != 1:
+            if (
+                artifact.target.variant != "base"
+                or artifact.target.app_major != 1
+                or artifact.target.vendor_family != "legacyflow-demo-core"
+            ):
                 raise FlowError(
                     "INCOMPATIBLE_VARIANT", "reviewed base variant 1.x", "unsupported variant"
                 )
@@ -74,19 +79,7 @@ class ReplayEngine:
                 step_id = "success-checkpoint"
                 await self.surface.verify(artifact.success_checkpoint, inputs)
                 self.evidence.event("checkpoint_verified", verified=True)
-                outputs = {}
-                for name, spec in artifact.outputs.items():
-                    text = await self.surface.read(spec.target)
-                    if spec.type == "decimal":
-                        try:
-                            number = Decimal(text)
-                            if not number.is_finite():
-                                raise InvalidOperation
-                        except InvalidOperation:
-                            raise FlowError(
-                                "OUTPUT_INVALID", "decimal output", "invalid extracted output"
-                            ) from None
-                    outputs[name] = text
+                outputs = await extract_outputs(self.surface, artifact, inputs)
                 self.evidence.event("outputs_extracted", outputs=outputs)
                 await final_screenshot(self.surface, self.evidence.directory)
                 return self.evidence.finish(

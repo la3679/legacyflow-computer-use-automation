@@ -1,6 +1,7 @@
 import builtins
 from pathlib import Path
 
+import httpx
 import pytest
 
 from legacyflow.config import Settings
@@ -52,6 +53,11 @@ async def test_replay_outcomes_without_planner(
     status: str,
     code: str | None,
 ) -> None:
+    def forbidden_network(*args, **kwargs):
+        pytest.fail("Replay attempted Python HTTP/SDK request")
+
+    monkeypatch.setattr(httpx.AsyncClient, "send", forbidden_network)
+    monkeypatch.setattr(httpx.Client, "send", forbidden_network)
     original = builtins.__import__
 
     def guarded(name, *args, **kwargs):
@@ -88,3 +94,36 @@ async def test_final_checkpoint_is_verified(
             artifact, {"member_id": "23456", "initial_deposit": "250"}
         )
     assert result.error and result.error.code == "CHECKPOINT_FAILED"
+
+
+async def test_review_amount_must_match_caller(artifact, base_url, tmp_path, monkeypatch):
+    settings = Settings(base_url=base_url, headless=True)
+    evidence = Evidence(tmp_path, "replay", Redactor(["23456"]))
+    async with BrowserSurface(settings, Policy(allowed_origins=[base_url]), evidence) as surface:
+        original = surface.read
+
+        async def drifted_read(target):
+            if target == artifact.outputs["initial_deposit"].target:
+                return "249.99"
+            return await original(target)
+
+        monkeypatch.setattr(surface, "read", drifted_read)
+        result = await ReplayEngine(surface, evidence, settings).run(
+            artifact, {"member_id": "23456", "initial_deposit": "250"}
+        )
+    assert result.error.code == "OUTPUT_MISMATCH"
+    assert result.error.step_id == "success-checkpoint"
+
+
+async def test_failure_keeps_artifact_identity(artifact, base_url, tmp_path):
+    artifact.id, artifact.version = "review-savings", "2.0.0"
+    artifact.target.vendor_family = "unreviewed-vendor"
+    settings = Settings(base_url=base_url, headless=True)
+    evidence = Evidence(tmp_path, "replay", Redactor())
+    async with BrowserSurface(settings, Policy(allowed_origins=[base_url]), evidence) as surface:
+        result = await ReplayEngine(surface, evidence, settings).run(
+            artifact, {"member_id": "23456", "initial_deposit": "250"}
+        )
+        assert surface.page.url == "about:blank"
+    assert result.error.code == "INCOMPATIBLE_VARIANT"
+    assert (result.capability_id, result.capability_version) == ("review-savings", "2.0.0")

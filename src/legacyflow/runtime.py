@@ -1,11 +1,13 @@
 """Deterministic runtime classification shared by discovery and replay; no planner dependency."""
 
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Protocol
 
 from legacyflow.evidence.logger import Evidence
 from legacyflow.models.contracts import (
     Action,
+    Artifact,
     Condition,
     Failure,
     FlowError,
@@ -16,6 +18,33 @@ from legacyflow.models.contracts import (
     Value,
 )
 from legacyflow.surfaces.base import ComputerSurface
+
+
+async def extract_outputs(
+    surface: ComputerSurface, artifact: Artifact, inputs: dict[str, str]
+) -> dict[str, str]:
+    outputs = {}
+    for name, spec in artifact.outputs.items():
+        text = await surface.read(spec.target)
+        if spec.type == "decimal":
+            try:
+                number = Decimal(text)
+                if not number.is_finite():
+                    raise InvalidOperation
+            except InvalidOperation:
+                raise FlowError(
+                    "OUTPUT_INVALID", "decimal output", "invalid extracted output"
+                ) from None
+            if name in inputs and number != Decimal(inputs[name]):
+                raise FlowError(
+                    "OUTPUT_MISMATCH", "output matches caller input", "review amount differs"
+                )
+        elif name in inputs and text != inputs[name]:
+            raise FlowError(
+                "OUTPUT_MISMATCH", "output matches caller input", "review value differs"
+            )
+        outputs[name] = text
+    return outputs
 
 
 def classify(observation: Observation) -> str | None:

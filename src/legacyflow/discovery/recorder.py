@@ -10,6 +10,11 @@ from legacyflow.models.contracts import (
     Value,
 )
 
+DISCOVERY_INPUTS = {
+    "member_id": InputSpec(type="string", sensitive=True),
+    "initial_deposit": InputSpec(type="decimal"),
+}
+
 
 class Recorder:
     """Compile executed, verified actions; never serialize a model transcript."""
@@ -49,10 +54,7 @@ class Recorder:
                 raise FlowError("OUTPUT_NOT_FOUND", label, "no unique output")
             outputs[name] = OutputSpec.model_validate({"type": kind, "target": matches[0].target})
         artifact = Artifact(
-            inputs={
-                "member_id": InputSpec(type="string", sensitive=True),
-                "initial_deposit": InputSpec(type="decimal"),
-            },
+            inputs=DISCOVERY_INPUTS,
             outputs=outputs,
             steps=self.steps,
             success_checkpoint=Condition(

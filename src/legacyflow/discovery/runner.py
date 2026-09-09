@@ -3,13 +3,14 @@ from pathlib import Path
 
 from legacyflow.config import Settings
 from legacyflow.discovery.planner import Planner
-from legacyflow.discovery.recorder import Recorder
+from legacyflow.discovery.recorder import DISCOVERY_INPUTS, Recorder
 from legacyflow.evidence.logger import Evidence
-from legacyflow.models.contracts import Action, FlowError, Result, Value
+from legacyflow.models.contracts import Action, FlowError, Result, Value, validate_inputs
 from legacyflow.runtime import (
     InterventionHandler,
     business_outcome,
     classify,
+    extract_outputs,
     failed,
     final_screenshot,
     ready,
@@ -41,6 +42,12 @@ class DiscoveryRunner:
         history: list[str] = []
         step_id = "entry"
         try:
+            try:
+                inputs = validate_inputs(DISCOVERY_INPUTS, inputs)
+            except ValueError:
+                raise FlowError(
+                    "INVALID_INPUT", "typed capability inputs", "input validation failed"
+                ) from None
             async with asyncio.timeout(self.settings.timeout_seconds):
                 await self.surface.execute(
                     Action(kind="navigate", value=Value(source="literal", value=target)), {}
@@ -63,10 +70,7 @@ class DiscoveryRunner:
                             observation, self.evidence.run_id, [inputs.get("member_id", "")]
                         )
                         await self.surface.verify(artifact.success_checkpoint, inputs)
-                        outputs = {
-                            name: await self.surface.read(spec.target)
-                            for name, spec in artifact.outputs.items()
-                        }
+                        outputs = await extract_outputs(self.surface, artifact, inputs)
                         artifact.validate_inputs(inputs)
                         artifact_path.parent.mkdir(parents=True, exist_ok=True)
                         artifact_path.write_text(

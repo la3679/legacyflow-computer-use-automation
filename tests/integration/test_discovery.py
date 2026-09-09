@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from legacyflow.config import Settings
 from legacyflow.discovery.runner import DiscoveryRunner
 from legacyflow.evidence.logger import Evidence
@@ -41,3 +43,30 @@ async def test_discovery_limit_returns_failure(base_url: str, tmp_path: Path) ->
         )
     assert result.error and result.error.code == "MAX_STEPS"
     assert (evidence.directory / "failure.png").exists()
+
+
+@pytest.mark.parametrize(
+    "inputs",
+    [
+        {},
+        {"member_id": "12345", "initial_deposit": "NaN"},
+        {"member_id": "12345", "initial_deposit": "0"},
+        {"member_id": "12345", "initial_deposit": "1.001"},
+        {"member_id": "12345", "initial_deposit": "100", "extra": "x"},
+    ],
+)
+async def test_invalid_discovery_inputs_do_not_act_or_plan(base_url, tmp_path, inputs):
+    settings = Settings(base_url=base_url, headless=True)
+    evidence = Evidence(tmp_path, "test-discovery", Redactor(["12345"]))
+
+    class ForbiddenPlanner:
+        async def decide(self, *args):
+            pytest.fail("Invalid inputs reached planner")
+
+    async with BrowserSurface(settings, Policy(allowed_origins=[base_url]), evidence) as surface:
+        result = await DiscoveryRunner(surface, ForbiddenPlanner(), evidence, settings).run(
+            "Prepare savings", "/members", inputs, tmp_path / "artifact.json"
+        )
+        assert surface.page.url == "about:blank"
+    assert result.error.code == "INVALID_INPUT"
+    assert not (tmp_path / "artifact.json").exists()

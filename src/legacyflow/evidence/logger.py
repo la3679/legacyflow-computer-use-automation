@@ -16,6 +16,7 @@ class Evidence:
         self.directory.mkdir(parents=True, exist_ok=False)
         self.redactor = redactor
         self.mode = mode
+        self.capability = ("open-savings-subaccount", "1.0.0")
         self.started = time.monotonic()
         self.write(
             "metadata.json",
@@ -47,6 +48,7 @@ class Evidence:
             stream.write(json.dumps(self.redactor.clean(record)) + "\n")
 
     def finish(self, result: Result) -> Result:
+        result.capability_id, result.capability_version = self.capability
         self.write("result.json", result.model_dump(mode="json"))
         self.event("run_completed", status=result.status)
         return result

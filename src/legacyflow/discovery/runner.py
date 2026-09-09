@@ -59,7 +59,9 @@ class DiscoveryRunner:
                         "planner_action_selected", step_id=step_id, decision=decision.model_dump()
                     )
                     if decision.action == "finish":
-                        artifact = recorder.compile(observation, self.evidence.run_id)
+                        artifact = recorder.compile(
+                            observation, self.evidence.run_id, [inputs.get("member_id", "")]
+                        )
                         await self.surface.verify(artifact.success_checkpoint, inputs)
                         outputs = {
                             name: await self.surface.read(spec.target)

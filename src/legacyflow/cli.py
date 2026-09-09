@@ -1,4 +1,5 @@
 import asyncio
+import json
 from pathlib import Path
 from typing import Annotated
 from urllib.parse import urlsplit
@@ -105,7 +106,7 @@ async def run_ui(
                 server.should_exit = True
             if server_task:
                 await server_task
-    typer.echo(result.model_dump_json(indent=2))
+    typer.echo(json.dumps(redactor.clean(result.model_dump(mode="json")), indent=2))
     typer.echo(f"Evidence: {evidence.directory}")
     return result
 

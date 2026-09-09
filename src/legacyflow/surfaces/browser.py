@@ -60,6 +60,7 @@ class BrowserSurface:
         self.context: BrowserContext
         self.page: Page
         self.blocked_request = False
+        self.recent_read: str | None = None
 
     async def __aenter__(self) -> "BrowserSurface":
         self.runtime = await async_playwright().start()
@@ -119,7 +120,9 @@ class BrowserSurface:
                     value_state=item["state"],
                 )
             )
-        observation = Observation(url=self.page.url, controls=controls, **raw)
+        observation = Observation(
+            url=self.page.url, controls=controls, recent_read=self.recent_read, **raw
+        )
         self.evidence.event("observation_captured", observation=observation.model_dump())
         return observation
 
@@ -185,7 +188,7 @@ class BrowserSurface:
                 assert action.value is not None
                 await locator.select_option(label=action.value.resolve(inputs))
             elif action.kind == "read":
-                await locator.inner_text()
+                self.recent_read = (await locator.inner_text()).strip()[:250]
         self.evidence.event("action_completed", action=action.kind)
 
     async def verify(self, condition: Condition, inputs: dict[str, str]) -> None:
@@ -220,4 +223,3 @@ class BrowserSurface:
         await self.page.screenshot(
             path=str(path), full_page=True, mask=[self.page.locator("input, textarea")]
         )
-

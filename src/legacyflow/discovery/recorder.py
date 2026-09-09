@@ -33,7 +33,9 @@ class Recorder:
             )
         )
 
-    def compile(self, observation: Observation, run_id: str) -> Artifact:
+    def compile(
+        self, observation: Observation, run_id: str, sensitive_values: list[str] | None = None
+    ) -> Artifact:
         if observation.heading != "Review New Account":
             raise FlowError("GOAL_NOT_REACHED", "Review New Account", observation.heading)
         outputs = {}
@@ -46,7 +48,7 @@ class Recorder:
             if len(matches) != 1:
                 raise FlowError("OUTPUT_NOT_FOUND", label, "no unique output")
             outputs[name] = OutputSpec.model_validate({"type": kind, "target": matches[0].target})
-        return Artifact(
+        artifact = Artifact(
             inputs={
                 "member_id": InputSpec(type="string", sensitive=True),
                 "initial_deposit": InputSpec(type="decimal"),
@@ -58,3 +60,11 @@ class Recorder:
             ),
             discovery_run_id=run_id,
         )
+        serialized = artifact.model_dump_json()
+        if any(value and value in serialized for value in sensitive_values or []):
+            raise FlowError(
+                "ARTIFACT_SENSITIVE_VALUE",
+                "parameterized artifact",
+                "sensitive invocation value found in compiled artifact",
+            )
+        return artifact

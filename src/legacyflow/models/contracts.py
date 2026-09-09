@@ -143,6 +143,7 @@ class Observation(Contract):
     app_version: str
     controls: list[Control]
     messages: list[str]
+    recent_read: str | None = None
 
 
 class Decision(Contract):

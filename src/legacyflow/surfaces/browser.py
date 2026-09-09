@@ -97,6 +97,8 @@ class BrowserSurface:
     async def observe(self) -> Observation:
         self._owned()
         self.policy.authorize_url(self.page.url)
+        if "observe" not in self.policy.allowed_actions:
+            raise FlowError("ACTION_BLOCKED", "allowed observation", "observation not permitted")
         if self.blocked_request:
             raise FlowError("NETWORK_BLOCKED", "allowed requests", "disallowed request blocked")
         raw = await self.page.evaluate(OBSERVE)
@@ -209,8 +211,13 @@ class BrowserSurface:
                 else:
                     await expect(locator).to_be_visible(timeout=self.settings.action_timeout_ms)
         except AssertionError:
+            expected = (
+                f"{condition.kind} matches input {condition.value.value}"
+                if condition.value.source == "input"
+                else f"{condition.kind}: {condition.value.value}"
+            )
             raise FlowError(
-                "CHECKPOINT_FAILED", condition.kind, "expected condition not satisfied"
+                "CHECKPOINT_FAILED", expected, "expected condition not satisfied"
             ) from None
         self.evidence.event("postcondition_checked", kind=condition.kind, verified=True)
 

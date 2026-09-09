@@ -32,6 +32,10 @@ async def test_real_browser_observation_fallback_and_ownership(
         surface.owner = "human"
         with pytest.raises(FlowError, match="CONTROL_NOT_OWNED"):
             await surface.observe()
+        surface.owner = "automation"
+        surface.policy.allowed_actions.remove("observe")
+        with pytest.raises(FlowError, match="ACTION_BLOCKED"):
+            await surface.observe()
 
 
 async def test_ambiguous_locator_fails_closed(base_url: str, tmp_path: Path) -> None:

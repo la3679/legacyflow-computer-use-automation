@@ -94,6 +94,7 @@ async def test_final_checkpoint_is_verified(
             artifact, {"member_id": "23456", "initial_deposit": "250"}
         )
     assert result.error and result.error.code == "CHECKPOINT_FAILED"
+    assert result.error.expected == "heading: Wrong heading"
 
 
 async def test_review_amount_must_match_caller(artifact, base_url, tmp_path, monkeypatch):

@@ -13,6 +13,12 @@ class Strategy(Contract):
     value: str = Field(min_length=1, max_length=200)
     role: Literal["button", "textbox", "combobox", "link", "heading", "status"] | None = None
 
+    @model_validator(mode="after")
+    def role_shape(self) -> Self:
+        if self.kind == "role" and self.role is None:
+            raise ValueError("Role strategy requires role")
+        return self
+
 
 class Target(Contract):
     strategies: list[Strategy] = Field(min_length=1, max_length=6)
@@ -32,6 +38,12 @@ class Condition(Contract):
     kind: Literal["heading", "field", "visible"]
     value: Value
     target: Target | None = None
+
+    @model_validator(mode="after")
+    def condition_shape(self) -> Self:
+        if self.kind in {"field", "visible"} and self.target is None:
+            raise ValueError("Field and visibility conditions require target")
+        return self
 
 
 class Action(Contract):
